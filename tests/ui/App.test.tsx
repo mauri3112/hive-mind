@@ -186,6 +186,69 @@ describe("Hive Mind app", () => {
     expect(screen.queryByText("Added Database participant")).not.toBeInTheDocument();
   });
 
+  it("removes older pending suggestions after a newer diagram revision is applied", async () => {
+    const cacheIntent: HiveIntent = {
+      ...appIntent,
+      id: "add-cache",
+      canonicalText: "Add a cache participant before the database.",
+      displayText: "Add cache participant",
+      transcriptRange: { startMs: 1201, endMs: 2400 }
+    };
+    const cacheSuggestion = makeSuggestion({
+      id: "sugg_cache",
+      intent: cacheIntent,
+      changeList: ["Added Cache participant"]
+    });
+    let analyzeCount = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/hive/analyze")) {
+        const intent = analyzeCount === 0 ? appIntent : cacheIntent;
+        analyzeCount += 1;
+        return jsonResponse({
+          seq: analyzeCount,
+          status: "ready",
+          intent
+        });
+      }
+
+      if (url.includes("/api/hive/propose")) {
+        const body = JSON.parse(String(init?.body)) as { intent: HiveIntent };
+        return jsonResponse({
+          seq: body.intent.id === appIntent.id ? 1 : 2,
+          suggestion: body.intent.id === appIntent.id ? makeSuggestion() : cacheSuggestion
+        });
+      }
+
+      if (url.includes("/api/hive/apply")) {
+        return jsonResponse({
+          seq: 1,
+          document: appliedDocument,
+          appliedSuggestionId: "sugg_db",
+          railEvents: [{ kind: "intent", text: "Add database persistence" }]
+        });
+      }
+
+      return jsonResponse({ error: "not_found" }, 404);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App analyzeIntervalMs={20} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /start recording/i }));
+    MockRecognition.latest?.emitResult("add a database to save messages", true);
+    await waitFor(() => expect(screen.getByText("Added Database participant")).toBeInTheDocument());
+    MockRecognition.latest?.emitResult("add a cache participant", true);
+    await waitFor(() => expect(screen.getByText("Added Cache participant")).toBeInTheDocument());
+
+    const databaseCard = screen.getByText("Added Database participant").closest(".suggestion-card");
+    expect(databaseCard).not.toBeNull();
+    await userEvent.click(within(databaseCard as HTMLElement).getByRole("button", { name: /accept/i }));
+
+    await waitFor(() => expect(screen.queryByText("Added Cache participant")).not.toBeInTheDocument());
+    expect(screen.queryByText("Added Database participant")).not.toBeInTheDocument();
+  });
+
   it("rejects a suggestion without applying it", async () => {
     const fetchMock = await createSuggestion();
     const card = screen.getByText("Add database persistence").closest(".suggestion-card");

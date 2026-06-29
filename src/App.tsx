@@ -79,17 +79,9 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
     );
   }, []);
 
-  const markSuggestionsStaleAgainst = useCallback((nextDocument: DiagramDocument) => {
+  const removeStaleSuggestionsAgainst = useCallback((nextDocument: DiagramDocument) => {
     setPendingSuggestions((current) =>
-      current.map((item) =>
-        item.suggestion.baseRevision === nextDocument.revision
-          ? item
-          : {
-              ...item,
-              validationStatus: "stale",
-              validationMessage: "This suggestion targets an older diagram revision."
-            }
-      )
+      current.filter((item) => item.suggestion.baseRevision === nextDocument.revision)
     );
   }, []);
 
@@ -153,7 +145,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
           if (payload.document) {
             documentRef.current = payload.document;
             setDocument(payload.document);
-            markSuggestionsStaleAgainst(payload.document);
+            removeStaleSuggestionsAgainst(payload.document);
           }
           addRailEvents([{ kind: "system", text: "Diagram revision caught up." }]);
         } else {
@@ -168,7 +160,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
 
     proposingRef.current = false;
     setProposalStatus((current) => (current === "Proposing" ? "Ready" : current));
-  }, [addRailEvents, documentRef, markSuggestionsStaleAgainst, sessionIdRef, validateSuggestion]);
+  }, [addRailEvents, documentRef, removeStaleSuggestionsAgainst, sessionIdRef, validateSuggestion]);
 
   const enqueueProposal = useCallback(
     (intent: HiveIntent) => {
@@ -374,17 +366,11 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
         documentRef.current = response.document;
         setDocument(response.document);
         setPendingSuggestions((current) =>
-          current
-            .filter((item) => item.suggestion.id !== response.appliedSuggestionId)
-            .map((item) =>
+          current.filter(
+            (item) =>
+              item.suggestion.id !== response.appliedSuggestionId &&
               item.suggestion.baseRevision === response.document.revision
-                ? item
-                : {
-                    ...item,
-                    validationStatus: "stale",
-                    validationMessage: "This suggestion targets an older diagram revision."
-                  }
-            )
+          )
         );
         addRailEvents(response.railEvents.map((event: RailEvent) => ({ kind: event.kind, text: event.text })));
         setProposalStatus("Applied");
@@ -394,7 +380,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
           if (payload.document) {
             documentRef.current = payload.document;
             setDocument(payload.document);
-            markSuggestionsStaleAgainst(payload.document);
+            removeStaleSuggestionsAgainst(payload.document);
           }
           setProposalStatus("Suggestion stale");
         } else {
@@ -412,7 +398,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
         }
       }
     },
-    [addRailEvents, documentRef, markSuggestionsStaleAgainst, sessionIdRef]
+    [addRailEvents, documentRef, removeStaleSuggestionsAgainst, sessionIdRef]
   );
 
   const handleRejectSuggestion = useCallback((suggestionId: string) => {
