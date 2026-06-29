@@ -182,7 +182,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
 
     const rolling = getRollingTranscriptWindow(segmentsRef.current, interimRef.current, 5000);
 
-    if (!rolling.text || rolling.text === lastAnalyzedTextRef.current) {
+    if (!rolling.text || (speech.source === "external" && !rolling.hasFinalSegment) || rolling.text === lastAnalyzedTextRef.current) {
       setAnalysisStatus(!rolling.text ? "Listening" : "Waiting");
       return;
     }
@@ -269,7 +269,7 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
     } finally {
       analyzingRef.current = false;
     }
-  }, [documentRef, enqueueProposal, interimRef, segmentsRef, sessionIdRef]);
+  }, [documentRef, enqueueProposal, interimRef, segmentsRef, sessionIdRef, speech.source]);
 
   useInterval(
     () => {
@@ -406,7 +406,17 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
     setProposalStatus("Suggestion rejected");
   }, []);
 
-  const status = speech.error ?? (!speech.isSupported ? "Speech unavailable" : speech.isRecording ? "Recording" : "Ready");
+  const status =
+    speech.error ??
+    (speech.source === "browser" && !speech.browserIsSupported
+      ? "Speech unavailable"
+      : speech.isRecording
+        ? speech.source === "external"
+          ? "External dictation"
+          : "Recording"
+        : speech.source === "external"
+          ? "External ready"
+          : "Ready");
 
   return (
     <div className="hive-app">
@@ -442,9 +452,14 @@ export default function App({ analyzeIntervalMs = 1000 }: AppProps) {
       </main>
 
       <RecordDock
+        source={speech.source}
+        browserIsSupported={speech.browserIsSupported}
         isRecording={speech.isRecording}
         isSupported={speech.isSupported}
         status={status}
+        externalTranscriptText={speech.externalTranscriptText}
+        onExternalTranscriptChange={speech.setExternalTranscriptText}
+        onSourceChange={speech.setSource}
         onToggleRecording={handleToggleRecording}
         onDownloadMermaid={handleDownloadMermaid}
         onDownloadSvg={handleDownloadSvg}

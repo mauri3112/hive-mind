@@ -9,6 +9,7 @@ The app is built for fast collaborative diagram sketching: it keeps the current 
 ## Features
 
 - Voice-to-intent analysis from the browser's speech recognition API.
+- External dictation input for local transcription tools such as TypeWhisper with Parakeet TDT.
 - Review-first workflow for diagram changes, with accept and reject controls.
 - Mermaid preview and source view kept side by side.
 - Syntax validation before suggestions can be applied.
@@ -29,7 +30,8 @@ The app is built for fast collaborative diagram sketching: it keeps the current 
 
 - Node.js `^20.19.0` or `>=22.12.0`.
 - npm.
-- A browser with Web Speech API support for dictation. Chrome and other Chromium-based browsers are the safest choice.
+- A browser with Web Speech API support for built-in dictation. Chrome and other Chromium-based browsers are the safest choice.
+- Optional: a local dictation tool that can type into the browser, such as TypeWhisper.
 
 ## Getting Started
 
@@ -54,6 +56,10 @@ npm run dev
 Open the Vite URL shown in your terminal, usually `http://localhost:5173`.
 
 The API server listens on `http://localhost:8787` by default, and Vite proxies `/api` requests to it.
+
+### Local Dictation
+
+For higher-quality local transcription, switch the dock source from browser speech to external dictation with the keyboard button, start recording, and focus the transcript input. Dictation tools that type into the active field, including TypeWhisper, can then feed text into Hive Mind's normal transcript and intent pipeline.
 
 ## Model Configuration
 

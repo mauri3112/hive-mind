@@ -176,6 +176,20 @@ describe("Hive Mind app", () => {
     expect(sourcePanel).not.toHaveTextContent("Database");
   });
 
+  it("accepts external dictation text as transcript input", async () => {
+    const fetchMock = mockFetchForSuggestion();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App analyzeIntervalMs={20} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /external dictation/i }));
+    await userEvent.click(screen.getByRole("button", { name: /start recording/i }));
+    await userEvent.type(screen.getByLabelText(/external dictation input/i), "add a database to save messages.{enter}");
+
+    await waitFor(() => expect(screen.getByText("Add database persistence")).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith("/api/hive/analyze", expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith("/api/hive/propose", expect.any(Object));
+  });
+
   it("applies a suggestion only after Accept", async () => {
     const fetchMock = await createSuggestion();
 
@@ -269,14 +283,16 @@ describe("Hive Mind app", () => {
     expect(screen.getByText("Parse error")).toBeInTheDocument();
   });
 
-  it("disables recording when browser speech recognition is unavailable", () => {
+  it("falls back to external dictation when browser speech recognition is unavailable", () => {
     window.SpeechRecognition = undefined;
     window.webkitSpeechRecognition = undefined;
 
     render(<App />);
 
-    expect(screen.getByRole("button", { name: /start recording/i })).toBeDisabled();
-    expect(screen.getByText("Speech unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start recording/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /browser speech/i })).toBeDisabled();
+    expect(screen.getByText("External ready")).toBeInTheDocument();
+    expect(screen.getByLabelText(/external dictation input/i)).toBeInTheDocument();
   });
 
   it("downloads Mermaid source", async () => {
