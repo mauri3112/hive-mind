@@ -4,6 +4,8 @@ Hive Mind is a voice-driven diagramming workspace for Mermaid diagrams. Speak a 
 
 The app is built for fast collaborative diagram sketching: it keeps the current diagram visible, streams transcript activity into a side rail, proposes versioned changes, and lets you export the result as `.mmd` or `.svg`.
 
+![Hive Mind demo screenshot](./screenshot-demo.png)
+
 ## Features
 
 - Voice-to-intent analysis from the browser's speech recognition API.
