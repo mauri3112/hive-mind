@@ -1,0 +1,55 @@
+{
+  "name": "hive-mind",
+  "version": "0.1.0",
+  "description": "A voice-driven Mermaid diagramming workspace with reviewable AI suggestions.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mauri3112/hive-mind.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mauri3112/hive-mind/issues"
+  },
+  "homepage": "https://github.com/mauri3112/hive-mind#readme",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:client\" \"npm:dev:server\"",
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "tsx watch server/index.ts",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "lucide-react": "^0.562.0",
+    "mermaid": "^11.16.0",
+    "openai": "^6.15.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "sanitize-html": "^2.17.0",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/sanitize-html": "^2.16.0",
+    "@types/supertest": "^6.0.3",
+    "concurrently": "^9.2.1",
+    "jsdom": "^27.3.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.16"
+  }
+}
